@@ -54,6 +54,13 @@
   * dependencies
     * accesskit_unix bumped from 0.11.0 to 0.11.1
 
+## [0.6.0](https://github.com/AccessKit/accesskit-python/compare/v0.5.0...0.6.0) (2024-07-14)
+
+
+### Features
+
+* Move the Python bindings into a standalone repository ([#1](https://github.com/AccessKit/accesskit-python/issues/1)) ([1b647fd](https://github.com/AccessKit/accesskit-python/commit/1b647fded7dcedbdd221e2b9a088bc7280e713d4))
+
 ## [0.5.0](https://github.com/AccessKit/accesskit/compare/accesskit_python-v0.4.1...accesskit_python-v0.5.0) (2024-06-29)
 
 
