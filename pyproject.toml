@@ -3,7 +3,7 @@ requires = ["maturin>=1.0,<2.0"]
 build-backend = "maturin"
 
 [tool.maturin]
-manifest-path = "bindings/python/Cargo.toml"
+manifest-path = "Cargo.toml"
 features = ["pyo3/extension-module"]
 include = [
     "LICENSE*"
@@ -16,7 +16,7 @@ macos-deployment-target = "10.12"
 macos-deployment-target = "11.0"
 
 [tool.ruff]
-include = ['bindings/python/*.py']
+include = ['*.py']
 
 [project]
 name = "accesskit"
@@ -36,4 +36,4 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/AccessKit/accesskit"
+Homepage = "https://github.com/AccessKit/accesskit-python"

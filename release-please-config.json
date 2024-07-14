@@ -1,17 +1,10 @@
 {
-  "bootstrap-sha": "24519ef87c1ff69bcb7133587a1a82f6dfbc8836",
+  "bootstrap-sha": "09e83e8543d7aa49753289b5071d8540c5471408",
   "bump-minor-pre-major": true,
-  "plugins": ["cargo-workspace"],
   "release-type": "rust",
+  "include-component-in-tag": false,
+  "include-v-in-tag": false,
   "packages": {
-    "common": {},
-    "consumer": {},
-    "platforms/atspi-common": {},
-    "platforms/macos": {},
-    "platforms/unix": {},
-    "platforms/windows": {},
-    "platforms/winit": {},
-    "bindings/c": {},
-    "bindings/python": {}
+    ".": {}
   }
 }

@@ -31,21 +31,3 @@ Our `CHANGELOG.md` files are auto generated using [Release Please](https://githu
 
 To control how your work will be described in the changelog, use [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) when writing the title of your pull request.
 If you think one line is not enough, mention it in your pull request so that maintainers can update the description of the merge commit.
-
-### Testing Locally
-
-We have platform-specific tests that do not run when doing `cargo test` from the project root directory.
-
-1. Run cross-platform tests:
-   ``` shell
-   cargo test
-   ```
-2. Run platform-specific tests by issuing the appropriate command for your platform:
-   ``` shell
-   cargo test -p accesskit_macos
-   cargo test -p accesskit_unix
-   cargo test -p accesskit_windows
-   ```
-
-> [!WARNING]
-> **Windows**: Some end-to-end tests may fail if the created window loses focus. This can happen when using the terminal built into your IDE. Try running them from Powershell or the Command Prompt instead.
