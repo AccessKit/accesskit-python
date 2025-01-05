@@ -15,6 +15,11 @@ impl Node {
     fn inner(&self) -> &accesskit::Node {
         &self.0
     }
+
+    #[inline]
+    fn inner_mut(&mut self) -> &mut accesskit::Node {
+        &mut self.0
+    }
 }
 
 impl From<Node> for accesskit::Node {
@@ -25,41 +30,9 @@ impl From<Node> for accesskit::Node {
 
 #[pymethods]
 impl Node {
-    #[getter]
-    pub fn role(&self) -> accesskit::Role {
-        self.inner().role()
-    }
-
-    pub fn supports_action(&self, action: accesskit::Action) -> bool {
-        self.inner().supports_action(action)
-    }
-}
-
-#[pyclass(module = "accesskit")]
-pub struct NodeBuilder(Option<accesskit::NodeBuilder>);
-
-impl NodeBuilder {
-    #[inline]
-    fn inner(&self) -> &accesskit::NodeBuilder {
-        self.0.as_ref().unwrap()
-    }
-
-    #[inline]
-    fn inner_mut(&mut self) -> &mut accesskit::NodeBuilder {
-        self.0.as_mut().unwrap()
-    }
-}
-
-#[pymethods]
-impl NodeBuilder {
     #[new]
-    pub fn new(role: accesskit::Role) -> NodeBuilder {
-        Self(Some(accesskit::NodeBuilder::new(role)))
-    }
-
-    pub fn build(&mut self) -> Node {
-        let builder = self.0.take().unwrap();
-        Node(builder.build())
+    pub fn new(role: accesskit::Role) -> Node {
+        Self(accesskit::Node::new(role))
     }
 
     #[getter]
@@ -220,7 +193,7 @@ impl From<TextSelection> for Box<accesskit::TextSelection> {
 macro_rules! clearer {
     ($clearer:ident) => {
         #[pymethods]
-        impl NodeBuilder {
+        impl Node {
             pub fn $clearer(&mut self) {
                 self.inner_mut().$clearer()
             }
@@ -230,15 +203,14 @@ macro_rules! clearer {
 
 macro_rules! getters {
     ($getter:ident, $macro_name:ident, $type:ty) => {
-        $macro_name! { Node, $getter, $type }
-        $macro_name! { NodeBuilder, $getter, $type }
+        $macro_name! { $getter, $type }
     };
 }
 
 macro_rules! simple_getter {
-    ($struct_name:ident, $getter:ident, $type:ty) => {
+    ($getter:ident, $type:ty) => {
         #[pymethods]
-        impl $struct_name {
+        impl Node {
             #[getter]
             pub fn $getter(&self) -> $type {
                 self.inner().$getter()
@@ -248,9 +220,9 @@ macro_rules! simple_getter {
 }
 
 macro_rules! converting_getter {
-    ($struct_name:ident, $getter:ident, $type:ty) => {
+    ($getter:ident, $type:ty) => {
         #[pymethods]
-        impl $struct_name {
+        impl Node {
             #[getter]
             pub fn $getter(&self) -> $type {
                 self.inner().$getter().into()
@@ -260,9 +232,9 @@ macro_rules! converting_getter {
 }
 
 macro_rules! option_getter {
-    ($struct_name:ident, $getter:ident, $type:ty) => {
+    ($getter:ident, $type:ty) => {
         #[pymethods]
-        impl $struct_name {
+        impl Node {
             #[getter]
             pub fn $getter(&self) -> $type {
                 self.inner().$getter().map(Into::into)
@@ -274,7 +246,7 @@ macro_rules! option_getter {
 macro_rules! simple_setter {
     ($setter:ident, $setter_param:ty) => {
         #[pymethods]
-        impl NodeBuilder {
+        impl Node {
             pub fn $setter(&mut self, value: $setter_param) {
                 self.inner_mut().$setter(value);
             }
@@ -285,7 +257,7 @@ macro_rules! simple_setter {
 macro_rules! converting_setter {
     ($setter:ident, $setter_param:ty) => {
         #[pymethods]
-        impl NodeBuilder {
+        impl Node {
             pub fn $setter(&mut self, value: $setter_param) {
                 self.inner_mut().$setter(value.into());
             }
@@ -297,7 +269,7 @@ macro_rules! flag_methods {
     ($(($getter:ident, $setter:ident, $clearer:ident)),+) => {
         $(getters! { $getter, simple_getter, bool }
         #[pymethods]
-        impl NodeBuilder {
+        impl Node {
             pub fn $setter(&mut self) {
                 self.inner_mut().$setter();
             }
@@ -318,16 +290,8 @@ macro_rules! property_methods {
 
 macro_rules! vec_property_methods {
     ($(($py_item_type:ty, $accesskit_item_type:ty, $getter:ident, $setter:ident, $pusher:ident, $clearer:ident)),+) => {
-        #[pymethods]
-        impl Node {
-            $(#[getter]
-            pub fn $getter(&self, py: Python) -> Py<PyList> {
-                let values = self.inner().$getter().iter().cloned().map(<$py_item_type>::from).map(|i| i.into_py(py));
-                PyList::new(py, values).into()
-            })*
-        }
         $(#[pymethods]
-        impl NodeBuilder {
+        impl Node {
             #[getter]
             pub fn $getter(&self, py: Python) -> Py<PyList> {
                 let values = self.inner().$getter().iter().cloned().map(<$py_item_type>::from).map(|i| i.into_py(py));
@@ -439,7 +403,6 @@ macro_rules! unique_enum_property_methods {
 }
 
 flag_methods! {
-    (is_hovered, set_hovered, clear_hovered),
     (is_hidden, set_hidden, clear_hidden),
     (is_linked, set_linked, clear_linked),
     (is_multiselectable, set_multiselectable, clear_multiselectable),
@@ -484,7 +447,7 @@ node_id_property_methods! {
 }
 
 string_property_methods! {
-    (name, set_name, clear_name),
+    (label, set_label, clear_label),
     (description, set_description, clear_description),
     (value, set_value, clear_value),
     (access_key, set_access_key, clear_access_key),
@@ -563,7 +526,6 @@ unique_enum_property_methods! {
     (accesskit::Invalid, invalid, set_invalid, clear_invalid),
     (accesskit::Toggled, toggled, set_toggled, clear_toggled),
     (accesskit::Live, live, set_live, clear_live),
-    (accesskit::DefaultActionVerb, default_action_verb, set_default_action_verb, clear_default_action_verb),
     (accesskit::TextDirection, text_direction, set_text_direction, clear_text_direction),
     (accesskit::Orientation, orientation, set_orientation, clear_orientation),
     (accesskit::SortDirection, sort_direction, set_sort_direction, clear_sort_direction),

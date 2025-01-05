@@ -4,11 +4,11 @@
 // the LICENSE-MIT file), at your option.
 
 use crate::{
-    LocalPythonActivationHandler, PythonActionHandler, PythonActivationHandler, TreeUpdate,
+    to_void_ptr, LocalPythonActivationHandler, PythonActionHandler, PythonActivationHandler,
+    TreeUpdate,
 };
 use accesskit_macos::NSPoint;
 use pyo3::{prelude::*, types::PyCapsule};
-use std::ffi::c_void;
 
 /// This class must only be used from the main thread.
 #[pyclass(module = "accesskit.macos", unsendable)]
@@ -202,12 +202,4 @@ impl SubclassingAdapter {
 #[pyfunction]
 pub unsafe fn add_focus_forwarder_to_window_class(class_name: &str) {
     accesskit_macos::add_focus_forwarder_to_window_class(class_name)
-}
-
-fn to_void_ptr(value: &PyAny) -> *mut c_void {
-    if let Ok(value) = value.extract::<&PyCapsule>() {
-        return value.pointer();
-    }
-    let value = value.getattr("value").unwrap_or(value);
-    value.extract::<isize>().unwrap() as *mut _
 }

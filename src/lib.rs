@@ -3,6 +3,9 @@
 // the LICENSE-APACHE file) or the MIT license (found in
 // the LICENSE-MIT file), at your option.
 
+// TODO: Remove this exception once we update pyo3.
+#![allow(non_local_definitions)]
+
 mod common;
 mod geometry;
 
@@ -19,10 +22,11 @@ mod unix;
 #[cfg(target_os = "windows")]
 mod windows;
 
+use pyo3::{prelude::*, types::PyCapsule};
+use std::ffi::c_void;
+
 pub use common::*;
 pub use geometry::*;
-
-use pyo3::prelude::*;
 
 #[pymodule]
 fn accesskit(py: Python<'_>, m: &PyModule) -> PyResult<()> {
@@ -32,7 +36,6 @@ fn accesskit(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<::accesskit::TextDirection>()?;
     m.add_class::<::accesskit::Invalid>()?;
     m.add_class::<::accesskit::Toggled>()?;
-    m.add_class::<::accesskit::DefaultActionVerb>()?;
     m.add_class::<::accesskit::SortDirection>()?;
     m.add_class::<::accesskit::AriaCurrent>()?;
     m.add_class::<::accesskit::Live>()?;
@@ -42,7 +45,6 @@ fn accesskit(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<::accesskit::VerticalOffset>()?;
     m.add_class::<::accesskit::TextDecoration>()?;
     m.add_class::<Node>()?;
-    m.add_class::<NodeBuilder>()?;
     m.add_class::<Tree>()?;
     m.add_class::<TreeUpdate>()?;
     m.add_class::<ActionDataKind>()?;
@@ -87,4 +89,15 @@ fn accesskit(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     }
 
     Ok(())
+}
+
+// The following exception is needed because this function is only used
+// in the bindings for some platform adapters.
+#[allow(dead_code)]
+fn to_void_ptr(value: &PyAny) -> *mut c_void {
+    if let Ok(value) = value.extract::<&PyCapsule>() {
+        return value.pointer();
+    }
+    let value = value.getattr("value").unwrap_or(value);
+    value.extract::<isize>().unwrap() as *mut _
 }
