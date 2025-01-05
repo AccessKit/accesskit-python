@@ -3,6 +3,9 @@
 // the LICENSE-APACHE file) or the MIT license (found in
 // the LICENSE-MIT file), at your option.
 
+// TODO: Remove this exception once we update pyo3.
+#![allow(non_local_definitions)]
+
 mod common;
 mod geometry;
 
