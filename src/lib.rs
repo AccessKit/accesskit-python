@@ -91,6 +91,9 @@ fn accesskit(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     Ok(())
 }
 
+// The following exception is needed because this function is only used
+// in the bindings for some platform adapters.
+#[allow(dead_code)]
 fn to_void_ptr(value: &PyAny) -> *mut c_void {
     if let Ok(value) = value.extract::<&PyCapsule>() {
         return value.pointer();
