@@ -54,6 +54,17 @@
   * dependencies
     * accesskit_unix bumped from 0.11.0 to 0.11.1
 
+## [0.7.0](https://github.com/AccessKit/accesskit-python/compare/0.6.0...0.7.0) (2025-05-06)
+
+
+### ⚠ BREAKING CHANGES
+
+* Update to latest AccessKit ([#3](https://github.com/AccessKit/accesskit-python/issues/3))
+
+### Bug Fixes
+
+* Update to latest AccessKit ([#3](https://github.com/AccessKit/accesskit-python/issues/3)) ([87b093b](https://github.com/AccessKit/accesskit-python/commit/87b093b58719679aab3193f0090f57a9b6b60a2d))
+
 ## [0.6.0](https://github.com/AccessKit/accesskit-python/compare/v0.5.0...0.6.0) (2024-07-14)
 
 
