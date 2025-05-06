@@ -24,20 +24,20 @@ SET_FOCUS_MSG = 0
 DO_DEFAULT_ACTION_MSG = 1
 
 
-def build_button(id, name):
-    builder = accesskit.NodeBuilder(accesskit.Role.BUTTON)
-    builder.set_bounds(BUTTON_1_RECT if id == BUTTON_1_ID else BUTTON_2_RECT)
-    builder.set_name(name)
-    builder.add_action(accesskit.Action.FOCUS)
-    builder.set_default_action_verb(accesskit.DefaultActionVerb.CLICK)
-    return builder.build()
+def build_button(id, label):
+    node = accesskit.Node(accesskit.Role.BUTTON)
+    node.set_bounds(BUTTON_1_RECT if id == BUTTON_1_ID else BUTTON_2_RECT)
+    node.set_label(label)
+    node.add_action(accesskit.Action.CLICK)
+    node.add_action(accesskit.Action.FOCUS)
+    return node
 
 
 def build_announcement(text):
-    builder = accesskit.NodeBuilder(accesskit.Role.LABEL)
-    builder.set_name(text)
-    builder.set_live(accesskit.Live.POLITE)
-    return builder.build()
+    node = accesskit.Node(accesskit.Role.LABEL)
+    node.set_value(text)
+    node.set_live(accesskit.Live.POLITE)
+    return node
 
 
 class PygameAdapter:
@@ -78,12 +78,12 @@ class WindowState:
         self.announcement = None
 
     def build_root(self):
-        builder = accesskit.NodeBuilder(accesskit.Role.WINDOW)
-        builder.set_children([BUTTON_1_ID, BUTTON_2_ID])
+        node = accesskit.Node(accesskit.Role.WINDOW)
+        node.set_children([BUTTON_1_ID, BUTTON_2_ID])
         if self.announcement is not None:
-            builder.push_child(ANNOUNCEMENT_ID)
-        builder.set_name(WINDOW_TITLE)
-        return builder.build()
+            node.push_child(ANNOUNCEMENT_ID)
+        node.set_label(WINDOW_TITLE)
+        return node
 
     def build_initial_tree(self):
         root = self.build_root()
@@ -131,7 +131,7 @@ class WindowState:
 
 
 def do_action(request):
-    if request.action in [accesskit.Action.DEFAULT, accesskit.Action.FOCUS]:
+    if request.action in [accesskit.Action.CLICK, accesskit.Action.FOCUS]:
         args = {
             "event": SET_FOCUS_MSG
             if request.action == accesskit.Action.FOCUS

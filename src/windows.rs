@@ -4,7 +4,8 @@
 // the LICENSE-MIT file), at your option.
 
 use crate::{
-    LocalPythonActivationHandler, PythonActionHandler, PythonActivationHandler, TreeUpdate,
+    to_void_ptr, LocalPythonActivationHandler, PythonActionHandler, PythonActivationHandler,
+    TreeUpdate,
 };
 use accesskit_windows::{HWND, LPARAM, WPARAM};
 use pyo3::prelude::*;
@@ -38,7 +39,7 @@ impl Adapter {
     #[new]
     pub fn new(hwnd: &PyAny, is_window_focused: bool, action_handler: Py<PyAny>) -> Self {
         Self(accesskit_windows::Adapter::new(
-            HWND(cast::<isize>(hwnd)),
+            HWND(to_void_ptr(hwnd)),
             is_window_focused,
             PythonActionHandler(action_handler),
         ))
@@ -98,7 +99,7 @@ impl SubclassingAdapter {
     #[new]
     pub fn new(hwnd: &PyAny, activation_handler: Py<PyAny>, action_handler: Py<PyAny>) -> Self {
         Self(accesskit_windows::SubclassingAdapter::new(
-            HWND(cast::<isize>(hwnd)),
+            HWND(to_void_ptr(hwnd)),
             PythonActivationHandler(activation_handler),
             PythonActionHandler(action_handler),
         ))
