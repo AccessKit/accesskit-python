@@ -42,7 +42,11 @@ impl Adapter {
     ///
     /// `view` must be a valid, unreleased pointer to an `NSView`.
     #[new]
-    pub unsafe fn new(view: &PyAny, is_view_focused: bool, action_handler: Py<PyAny>) -> Self {
+    pub unsafe fn new(
+        view: &Bound<'_, PyAny>,
+        is_view_focused: bool,
+        action_handler: Py<PyAny>,
+    ) -> Self {
         Self(accesskit_macos::Adapter::new(
             to_void_ptr(view),
             is_view_focused,
@@ -59,7 +63,7 @@ impl Adapter {
         self.0
             .update_if_active(|| {
                 let update = update_factory.call0(py).unwrap();
-                update.extract::<TreeUpdate>(py).unwrap().into()
+                (&*update.extract::<PyRef<TreeUpdate>>(py).unwrap()).into()
             })
             .map(Into::into)
     }
@@ -128,7 +132,7 @@ impl SubclassingAdapter {
     /// `view` must be a valid, unreleased pointer to an `NSView`.
     #[new]
     pub unsafe fn new(
-        view: &PyAny,
+        view: &Bound<'_, PyAny>,
         activation_handler: Py<PyAny>,
         action_handler: Py<PyAny>,
     ) -> Self {
@@ -154,7 +158,7 @@ impl SubclassingAdapter {
     /// a content view.
     #[staticmethod]
     pub unsafe fn for_window(
-        window: &PyAny,
+        window: &Bound<'_, PyAny>,
         activation_handler: Py<PyAny>,
         action_handler: Py<PyAny>,
     ) -> Self {
@@ -174,7 +178,7 @@ impl SubclassingAdapter {
         self.0
             .update_if_active(|| {
                 let update = update_factory.call0(py).unwrap();
-                update.extract::<TreeUpdate>(py).unwrap().into()
+                (&*update.extract::<PyRef<TreeUpdate>>(py).unwrap()).into()
             })
             .map(Into::into)
     }

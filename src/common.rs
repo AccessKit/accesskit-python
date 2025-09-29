@@ -4,7 +4,11 @@
 // the LICENSE-MIT file), at your option.
 
 use crate::{Point, Rect};
-use pyo3::{prelude::*, types::PyList};
+use pyo3::{
+    prelude::*,
+    types::{PyList, PyTuple},
+    IntoPyObjectExt,
+};
 
 #[derive(Clone)]
 #[pyclass(module = "accesskit")]
@@ -151,7 +155,6 @@ impl From<accesskit::TextPosition> for TextPosition {
     }
 }
 
-#[derive(Clone)]
 #[pyclass(get_all, set_all, module = "accesskit")]
 pub struct TextSelection {
     pub anchor: Py<TextPosition>,
@@ -178,15 +181,20 @@ impl From<&accesskit::TextSelection> for TextSelection {
 impl From<TextSelection> for accesskit::TextSelection {
     fn from(selection: TextSelection) -> Self {
         Python::with_gil(|py| accesskit::TextSelection {
-            anchor: selection.anchor.as_ref(py).borrow().0,
-            focus: selection.focus.as_ref(py).borrow().0,
+            anchor: selection.anchor.bind(py).borrow().0,
+            focus: selection.focus.bind(py).borrow().0,
         })
     }
 }
 
-impl From<TextSelection> for Box<accesskit::TextSelection> {
-    fn from(selection: TextSelection) -> Self {
-        Box::new(selection.into())
+impl From<&TextSelection> for Box<accesskit::TextSelection> {
+    fn from(selection: &TextSelection) -> Self {
+        Python::with_gil(|py| {
+            Box::new(accesskit::TextSelection {
+                anchor: selection.anchor.borrow(py).0,
+                focus: selection.focus.borrow(py).0,
+            })
+        })
     }
 }
 
@@ -293,14 +301,14 @@ macro_rules! vec_property_methods {
         $(#[pymethods]
         impl Node {
             #[getter]
-            pub fn $getter(&self, py: Python) -> Py<PyList> {
-                let values = self.inner().$getter().iter().cloned().map(<$py_item_type>::from).map(|i| i.into_py(py));
-                PyList::new(py, values).into()
+            pub fn $getter(&self, py: Python) -> PyResult<Py<PyList>> {
+                let values = self.inner().$getter().iter().cloned().map(<$py_item_type>::from);
+                Ok(PyList::new(py, values)?.unbind())
             }
-            pub fn $setter(&mut self, values: &PyList) {
+            pub fn $setter(&mut self, values: &Bound<'_, PyList>) {
                 let values = values
                     .iter()
-                    .map(PyAny::extract::<$py_item_type>)
+                    .map(|item| item.extract::<$py_item_type>())
                     .filter_map(PyResult::ok)
                     .map(<$accesskit_item_type>::from)
                     .collect::<Vec<$accesskit_item_type>>();
@@ -540,7 +548,7 @@ unique_enum_property_methods! {
 property_methods! {
     (transform, option_getter, Option<crate::Affine>, set_transform, simple_setter, crate::Affine, clear_transform),
     (bounds, option_getter, Option<crate::Rect>, set_bounds, converting_setter, crate::Rect, clear_bounds),
-    (text_selection, option_getter, Option<TextSelection>, set_text_selection, simple_setter, TextSelection, clear_text_selection)
+    (text_selection, option_getter, Option<TextSelection>, set_text_selection, simple_setter, &TextSelection, clear_text_selection)
 }
 
 vec_property_methods! {
@@ -551,7 +559,6 @@ vec_property_methods! {
 #[pyclass(module = "accesskit", get_all, set_all)]
 pub struct Tree {
     pub root: NodeId,
-    pub app_name: Option<String>,
     pub toolkit_name: Option<String>,
     pub toolkit_version: Option<String>,
 }
@@ -562,7 +569,6 @@ impl Tree {
     pub fn new(root: NodeId) -> Self {
         Self {
             root,
-            app_name: None,
             toolkit_name: None,
             toolkit_version: None,
         }
@@ -573,14 +579,12 @@ impl From<Tree> for accesskit::Tree {
     fn from(tree: Tree) -> Self {
         Self {
             root: tree.root.into(),
-            app_name: tree.app_name,
             toolkit_name: tree.toolkit_name,
             toolkit_version: tree.toolkit_version,
         }
     }
 }
 
-#[derive(Clone)]
 #[pyclass(module = "accesskit", get_all, set_all)]
 pub struct TreeUpdate {
     pub nodes: Py<PyList>,
@@ -600,22 +604,21 @@ impl TreeUpdate {
     }
 }
 
-impl From<TreeUpdate> for accesskit::TreeUpdate {
-    fn from(update: TreeUpdate) -> Self {
+impl From<&TreeUpdate> for accesskit::TreeUpdate {
+    fn from(update: &TreeUpdate) -> Self {
         Python::with_gil(|py| Self {
             nodes: update
                 .nodes
-                .as_ref(py)
+                .bind(py)
                 .iter()
-                .map(PyAny::extract::<(NodeId, Node)>)
+                .map(|n| n.extract::<(NodeId, Node)>())
                 .filter_map(Result::ok)
                 .map(|(id, node)| (id.into(), node.into()))
                 .collect(),
-            tree: update.tree.map(|tree| {
-                let tree = tree.as_ref(py).borrow();
+            tree: update.tree.as_ref().map(|tree| {
+                let tree = tree.bind(py).borrow();
                 accesskit::Tree {
                     root: tree.root.into(),
-                    app_name: tree.app_name.clone(),
                     toolkit_name: tree.toolkit_name.clone(),
                     toolkit_version: tree.toolkit_version.clone(),
                 }
@@ -625,8 +628,8 @@ impl From<TreeUpdate> for accesskit::TreeUpdate {
     }
 }
 
-#[derive(Clone)]
-#[pyclass(module = "accesskit", rename_all = "SCREAMING_SNAKE_CASE")]
+#[derive(PartialEq)]
+#[pyclass(module = "accesskit", rename_all = "SCREAMING_SNAKE_CASE", eq, eq_int)]
 pub enum ActionDataKind {
     CustomAction,
     Value,
@@ -641,7 +644,7 @@ pub enum ActionDataKind {
 pub struct ActionRequest {
     pub action: accesskit::Action,
     pub target: NodeId,
-    pub data: Option<(ActionDataKind, Py<PyAny>)>,
+    pub data: Option<Py<PyTuple>>,
 }
 
 impl From<accesskit::ActionRequest> for ActionRequest {
@@ -649,30 +652,38 @@ impl From<accesskit::ActionRequest> for ActionRequest {
         Python::with_gil(|py| Self {
             action: request.action,
             target: request.target.into(),
-            data: request.data.map(|data| match data {
-                accesskit::ActionData::CustomAction(action) => {
-                    (ActionDataKind::CustomAction, action.into_py(py))
+            data: request.data.map(|data| {
+                match data {
+                    accesskit::ActionData::CustomAction(action) => (
+                        ActionDataKind::CustomAction,
+                        action.into_py_any(py).unwrap(),
+                    ),
+                    accesskit::ActionData::Value(value) => {
+                        (ActionDataKind::Value, value.into_py_any(py).unwrap())
+                    }
+                    accesskit::ActionData::NumericValue(value) => {
+                        (ActionDataKind::NumericValue, value.into_py_any(py).unwrap())
+                    }
+                    accesskit::ActionData::ScrollTargetRect(rect) => (
+                        ActionDataKind::ScrollTargetRect,
+                        Rect::from(rect).into_py_any(py).unwrap(),
+                    ),
+                    accesskit::ActionData::ScrollToPoint(point) => (
+                        ActionDataKind::ScrollToPoint,
+                        Point::from(point).into_py_any(py).unwrap(),
+                    ),
+                    accesskit::ActionData::SetScrollOffset(point) => (
+                        ActionDataKind::SetScrollOffset,
+                        Point::from(point).into_py_any(py).unwrap(),
+                    ),
+                    accesskit::ActionData::SetTextSelection(selection) => (
+                        ActionDataKind::SetTextSelection,
+                        TextSelection::from(&selection).into_py_any(py).unwrap(),
+                    ),
                 }
-                accesskit::ActionData::Value(value) => (ActionDataKind::Value, value.into_py(py)),
-                accesskit::ActionData::NumericValue(value) => {
-                    (ActionDataKind::NumericValue, value.into_py(py))
-                }
-                accesskit::ActionData::ScrollTargetRect(rect) => (
-                    ActionDataKind::ScrollTargetRect,
-                    Rect::from(rect).into_py(py),
-                ),
-                accesskit::ActionData::ScrollToPoint(point) => (
-                    ActionDataKind::ScrollToPoint,
-                    Point::from(point).into_py(py),
-                ),
-                accesskit::ActionData::SetScrollOffset(point) => (
-                    ActionDataKind::SetScrollOffset,
-                    Point::from(point).into_py(py),
-                ),
-                accesskit::ActionData::SetTextSelection(selection) => (
-                    ActionDataKind::SetTextSelection,
-                    TextSelection::from(&selection).into_py(py),
-                ),
+                .into_pyobject(py)
+                .unwrap()
+                .unbind()
             }),
         })
     }
@@ -690,9 +701,9 @@ impl accesskit::ActivationHandler for LocalPythonActivationHandler<'_> {
     fn request_initial_tree(&mut self) -> Option<accesskit::TreeUpdate> {
         let result = self.handler.call0(self.py).unwrap();
         result
-            .extract::<Option<TreeUpdate>>(self.py)
+            .extract::<Option<PyRef<TreeUpdate>>>(self.py)
             .unwrap()
-            .map(Into::into)
+            .map(|tree| (&*tree).into())
     }
 }
 
@@ -703,9 +714,9 @@ impl accesskit::ActivationHandler for PythonActivationHandler {
         Python::with_gil(|py| {
             let result = self.0.call0(py).unwrap();
             result
-                .extract::<Option<TreeUpdate>>(py)
+                .extract::<Option<PyRef<TreeUpdate>>>(py)
                 .unwrap()
-                .map(Into::into)
+                .map(|tree| (&*tree).into())
         })
     }
 }
