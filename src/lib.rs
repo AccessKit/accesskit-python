@@ -41,6 +41,8 @@ fn accesskit(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<::accesskit::TextAlign>()?;
     m.add_class::<::accesskit::VerticalOffset>()?;
     m.add_class::<::accesskit::TextDecoration>()?;
+    m.add_class::<::accesskit::ScrollUnit>()?;
+    m.add_class::<::accesskit::ScrollHint>()?;
     m.add_class::<Node>()?;
     m.add_class::<Tree>()?;
     m.add_class::<TreeUpdate>()?;

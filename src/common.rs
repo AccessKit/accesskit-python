@@ -3,12 +3,13 @@
 // the LICENSE-APACHE file) or the MIT license (found in
 // the LICENSE-MIT file), at your option.
 
-use crate::{Point, Rect};
 use pyo3::{
     prelude::*,
     types::{PyList, PyTuple},
     IntoPyObjectExt,
 };
+
+use crate::Point;
 
 #[derive(Clone)]
 #[pyclass(module = "accesskit")]
@@ -62,6 +63,22 @@ impl Node {
 
     pub fn clear_actions(&mut self) {
         self.inner_mut().clear_actions()
+    }
+
+    pub fn child_supports_action(&self, action: accesskit::Action) -> bool {
+        self.inner().child_supports_action(action)
+    }
+
+    pub fn add_child_action(&mut self, action: accesskit::Action) {
+        self.inner_mut().add_child_action(action)
+    }
+
+    pub fn remove_child_action(&mut self, action: accesskit::Action) {
+        self.inner_mut().remove_child_action(action)
+    }
+
+    pub fn clear_child_actions(&mut self) {
+        self.inner_mut().clear_child_actions();
     }
 }
 
@@ -412,7 +429,6 @@ macro_rules! unique_enum_property_methods {
 
 flag_methods! {
     (is_hidden, set_hidden, clear_hidden),
-    (is_linked, set_linked, clear_linked),
     (is_multiselectable, set_multiselectable, clear_multiselectable),
     (is_required, set_required, clear_required),
     (is_visited, set_visited, clear_visited),
@@ -634,7 +650,8 @@ pub enum ActionDataKind {
     CustomAction,
     Value,
     NumericValue,
-    ScrollTargetRect,
+    ScrollUnit,
+    ScrollHint,
     ScrollToPoint,
     SetScrollOffset,
     SetTextSelection,
@@ -664,10 +681,12 @@ impl From<accesskit::ActionRequest> for ActionRequest {
                     accesskit::ActionData::NumericValue(value) => {
                         (ActionDataKind::NumericValue, value.into_py_any(py).unwrap())
                     }
-                    accesskit::ActionData::ScrollTargetRect(rect) => (
-                        ActionDataKind::ScrollTargetRect,
-                        Rect::from(rect).into_py_any(py).unwrap(),
-                    ),
+                    accesskit::ActionData::ScrollUnit(unit) => {
+                        (ActionDataKind::ScrollUnit, unit.into_py_any(py).unwrap())
+                    }
+                    accesskit::ActionData::ScrollHint(hint) => {
+                        (ActionDataKind::ScrollHint, hint.into_py_any(py).unwrap())
+                    }
                     accesskit::ActionData::ScrollToPoint(point) => (
                         ActionDataKind::ScrollToPoint,
                         Point::from(point).into_py_any(py).unwrap(),
