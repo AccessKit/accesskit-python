@@ -54,6 +54,25 @@
   * dependencies
     * accesskit_unix bumped from 0.11.0 to 0.11.1
 
+## [0.7.0](https://github.com/AccessKit/accesskit-python/compare/0.6.0...0.7.0) (2025-09-30)
+
+
+### ⚠ BREAKING CHANGES
+
+* Update pyo3 to 0.24 and AccessKit crates to their latest versions ([#6](https://github.com/AccessKit/accesskit-python/issues/6))
+* Update to latest AccessKit ([#3](https://github.com/AccessKit/accesskit-python/issues/3))
+
+### Features
+
+* Add missing classes and enums to the API ([#8](https://github.com/AccessKit/accesskit-python/issues/8)) ([8201d7a](https://github.com/AccessKit/accesskit-python/commit/8201d7afd0c582f445457a1442f14324357a8678))
+* Update pyo3 to 0.24 and AccessKit crates to their latest versions ([#6](https://github.com/AccessKit/accesskit-python/issues/6)) ([8431b99](https://github.com/AccessKit/accesskit-python/commit/8431b99824393093f418eba7a808606c3a3cadbe))
+
+
+### Bug Fixes
+
+* Update minimum supported Rust version to 1.77.2 ([#7](https://github.com/AccessKit/accesskit-python/issues/7)) ([519c9b3](https://github.com/AccessKit/accesskit-python/commit/519c9b3bd1798b81d2bf39096e5bdcafeb325876))
+* Update to latest AccessKit ([#3](https://github.com/AccessKit/accesskit-python/issues/3)) ([87b093b](https://github.com/AccessKit/accesskit-python/commit/87b093b58719679aab3193f0090f57a9b6b60a2d))
+
 ## [0.6.0](https://github.com/AccessKit/accesskit-python/compare/v0.5.0...0.6.0) (2024-07-14)
 
 
