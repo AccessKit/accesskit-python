@@ -13,7 +13,7 @@ dependencies = [
 
 [[package]]
 name = "accesskit-python"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "accesskit",
  "accesskit_macos",
