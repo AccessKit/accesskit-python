@@ -35,6 +35,7 @@ fn accesskit(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<::accesskit::Toggled>()?;
     m.add_class::<::accesskit::SortDirection>()?;
     m.add_class::<::accesskit::AriaCurrent>()?;
+    m.add_class::<::accesskit::AutoComplete>()?;
     m.add_class::<::accesskit::Live>()?;
     m.add_class::<::accesskit::HasPopup>()?;
     m.add_class::<::accesskit::ListStyle>()?;
@@ -44,6 +45,9 @@ fn accesskit(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<::accesskit::ScrollUnit>()?;
     m.add_class::<::accesskit::ScrollHint>()?;
     m.add_class::<Node>()?;
+    m.add_class::<CustomAction>()?;
+    m.add_class::<TextPosition>()?;
+    m.add_class::<TextSelection>()?;
     m.add_class::<Tree>()?;
     m.add_class::<TreeUpdate>()?;
     m.add_class::<ActionDataKind>()?;
