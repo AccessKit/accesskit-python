@@ -3,9 +3,6 @@
 // the LICENSE-APACHE file) or the MIT license (found in
 // the LICENSE-MIT file), at your option.
 
-// TODO: Remove this exception once we update pyo3.
-#![allow(non_local_definitions)]
-
 mod common;
 mod geometry;
 
@@ -29,7 +26,7 @@ pub use common::*;
 pub use geometry::*;
 
 #[pymodule]
-fn accesskit(py: Python<'_>, m: &PyModule) -> PyResult<()> {
+fn accesskit(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<::accesskit::Role>()?;
     m.add_class::<::accesskit::Action>()?;
     m.add_class::<::accesskit::Orientation>()?;
@@ -44,6 +41,8 @@ fn accesskit(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<::accesskit::TextAlign>()?;
     m.add_class::<::accesskit::VerticalOffset>()?;
     m.add_class::<::accesskit::TextDecoration>()?;
+    m.add_class::<::accesskit::ScrollUnit>()?;
+    m.add_class::<::accesskit::ScrollHint>()?;
     m.add_class::<Node>()?;
     m.add_class::<Tree>()?;
     m.add_class::<TreeUpdate>()?;
@@ -57,15 +56,15 @@ fn accesskit(py: Python<'_>, m: &PyModule) -> PyResult<()> {
 
     #[cfg(target_os = "macos")]
     {
-        let macos_module = PyModule::new(py, "macos")?;
+        let macos_module = PyModule::new(m.py(), "macos")?;
         macos_module.add_class::<macos::QueuedEvents>()?;
         macos_module.add_class::<macos::Adapter>()?;
         macos_module.add_class::<macos::SubclassingAdapter>()?;
         macos_module.add_function(wrap_pyfunction!(
             macos::add_focus_forwarder_to_window_class,
-            macos_module
+            &macos_module
         )?)?;
-        m.add_submodule(macos_module)?;
+        m.add_submodule(&macos_module)?;
     }
     #[cfg(any(
         target_os = "linux",
@@ -75,17 +74,17 @@ fn accesskit(py: Python<'_>, m: &PyModule) -> PyResult<()> {
         target_os = "openbsd",
     ))]
     {
-        let unix_module = PyModule::new(py, "unix")?;
+        let unix_module = PyModule::new(m.py(), "unix")?;
         unix_module.add_class::<unix::Adapter>()?;
-        m.add_submodule(unix_module)?;
+        m.add_submodule(&unix_module)?;
     }
     #[cfg(target_os = "windows")]
     {
-        let windows_module = PyModule::new(py, "windows")?;
+        let windows_module = PyModule::new(m.py(), "windows")?;
         windows_module.add_class::<windows::QueuedEvents>()?;
         windows_module.add_class::<windows::Adapter>()?;
         windows_module.add_class::<windows::SubclassingAdapter>()?;
-        m.add_submodule(windows_module)?;
+        m.add_submodule(&windows_module)?;
     }
 
     Ok(())
@@ -94,10 +93,10 @@ fn accesskit(py: Python<'_>, m: &PyModule) -> PyResult<()> {
 // The following exception is needed because this function is only used
 // in the bindings for some platform adapters.
 #[allow(dead_code)]
-fn to_void_ptr(value: &PyAny) -> *mut c_void {
-    if let Ok(value) = value.extract::<&PyCapsule>() {
-        return value.pointer();
+fn to_void_ptr(value: &Bound<'_, PyAny>) -> *mut c_void {
+    if let Ok(capsule) = value.downcast::<PyCapsule>() {
+        return capsule.pointer();
     }
-    let value = value.getattr("value").unwrap_or(value);
+    let value = value.getattr("value").unwrap_or(value.clone());
     value.extract::<isize>().unwrap() as *mut _
 }

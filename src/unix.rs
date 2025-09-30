@@ -36,7 +36,7 @@ impl Adapter {
     pub fn update_if_active(&mut self, py: Python<'_>, update_factory: Py<PyAny>) {
         self.0.update_if_active(|| {
             let update = update_factory.call0(py).unwrap();
-            update.extract::<TreeUpdate>(py).unwrap().into()
+            (&*update.extract::<PyRef<TreeUpdate>>(py).unwrap()).into()
         });
     }
 

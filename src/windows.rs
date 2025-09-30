@@ -3,27 +3,30 @@
 // the LICENSE-APACHE file) or the MIT license (found in
 // the LICENSE-MIT file), at your option.
 
+use accesskit_windows::{HWND, LPARAM, WPARAM};
+use pyo3::prelude::*;
+use std::sync::{Arc, Mutex};
+
 use crate::{
     to_void_ptr, LocalPythonActivationHandler, PythonActionHandler, PythonActivationHandler,
     TreeUpdate,
 };
-use accesskit_windows::{HWND, LPARAM, WPARAM};
-use pyo3::prelude::*;
 
 #[pyclass(module = "accesskit.windows")]
-pub struct QueuedEvents(Option<accesskit_windows::QueuedEvents>);
+pub struct QueuedEvents(Option<Arc<Mutex<accesskit_windows::QueuedEvents>>>);
 
 #[pymethods]
 impl QueuedEvents {
     pub fn raise_events(&mut self) {
-        let events = self.0.take().unwrap();
+        let events = Arc::into_inner(self.0.take().unwrap()).unwrap();
+        let events = events.into_inner().unwrap();
         events.raise();
     }
 }
 
 impl From<accesskit_windows::QueuedEvents> for QueuedEvents {
     fn from(events: accesskit_windows::QueuedEvents) -> Self {
-        Self(Some(events))
+        Self(Some(Arc::new(Mutex::new(events))))
     }
 }
 
@@ -37,7 +40,11 @@ impl Adapter {
     /// The action handler may or may not be called on the thread that owns
     /// the window.
     #[new]
-    pub fn new(hwnd: &PyAny, is_window_focused: bool, action_handler: Py<PyAny>) -> Self {
+    pub fn new(
+        hwnd: &Bound<'_, PyAny>,
+        is_window_focused: bool,
+        action_handler: Py<PyAny>,
+    ) -> Self {
         Self(accesskit_windows::Adapter::new(
             HWND(to_void_ptr(hwnd)),
             is_window_focused,
@@ -54,7 +61,7 @@ impl Adapter {
         self.0
             .update_if_active(|| {
                 let update = update_factory.call0(py).unwrap();
-                update.extract::<TreeUpdate>(py).unwrap().into()
+                (&*update.extract::<PyRef<TreeUpdate>>(py).unwrap()).into()
             })
             .map(Into::into)
     }
@@ -67,8 +74,8 @@ impl Adapter {
     pub fn handle_wm_getobject(
         &mut self,
         py: Python<'_>,
-        wparam: &PyAny,
-        lparam: &PyAny,
+        wparam: &Bound<'_, PyAny>,
+        lparam: &Bound<'_, PyAny>,
         activation_handler: Py<PyAny>,
     ) -> Option<isize> {
         let mut activation_handler = LocalPythonActivationHandler {
@@ -97,7 +104,11 @@ impl SubclassingAdapter {
     /// The action handler may or may not be called on the thread that owns
     /// the window.
     #[new]
-    pub fn new(hwnd: &PyAny, activation_handler: Py<PyAny>, action_handler: Py<PyAny>) -> Self {
+    pub fn new(
+        hwnd: &Bound<'_, PyAny>,
+        activation_handler: Py<PyAny>,
+        action_handler: Py<PyAny>,
+    ) -> Self {
         Self(accesskit_windows::SubclassingAdapter::new(
             HWND(to_void_ptr(hwnd)),
             PythonActivationHandler(activation_handler),
@@ -114,13 +125,13 @@ impl SubclassingAdapter {
         self.0
             .update_if_active(|| {
                 let update = update_factory.call0(py).unwrap();
-                update.extract::<TreeUpdate>(py).unwrap().into()
+                (&*update.extract::<PyRef<TreeUpdate>>(py).unwrap()).into()
             })
             .map(Into::into)
     }
 }
 
-fn cast<'a, D: FromPyObject<'a>>(value: &'a PyAny) -> D {
-    let value = value.getattr("value").unwrap_or(value);
+fn cast<'a, D: FromPyObject<'a>>(value: &'a Bound<PyAny>) -> D {
+    let value = value.getattr("value").unwrap_or(value.clone());
     value.extract().unwrap()
 }

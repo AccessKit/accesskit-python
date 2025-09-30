@@ -91,7 +91,6 @@ class WindowState:
         button_2 = build_button(BUTTON_2_ID, "Button 2")
         result = accesskit.TreeUpdate(self.focus)
         tree = accesskit.Tree(WINDOW_ID)
-        tree.app_name = "Hello world"
         result.tree = tree
         result.nodes.append((WINDOW_ID, root))
         result.nodes.append((BUTTON_1_ID, button_1))
