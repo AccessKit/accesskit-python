@@ -31,7 +31,7 @@ jobs:
           pip install accesskit --no-index --find-links dist --force-reinstall
           python -c "import accesskit"
       - name: Upload wheels
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: wheels-${{ matrix.target }}
           path: dist
@@ -60,7 +60,7 @@ jobs:
           pip install accesskit --no-index --find-links dist --force-reinstall
           python -c "import accesskit"
       - name: Upload wheels
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: wheels-linux-${{ matrix.target }}
           path: dist
@@ -88,7 +88,7 @@ jobs:
           pip install accesskit --no-index --find-links dist --force-reinstall
           python -c "import accesskit"
       - name: Upload wheels
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: wheels-windows-${{ matrix.target }}
           path: dist
@@ -103,7 +103,7 @@ jobs:
           command: sdist
           args: --out dist
       - name: Upload sdist
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: wheels-sdist
           path: dist
@@ -117,7 +117,7 @@ jobs:
     needs: [macos-wheels, linux-wheels, windows-wheels, sdist]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v6
         with:
           pattern: wheels-*
           merge-multiple: true
@@ -132,7 +132,7 @@ jobs:
     needs: [macos-wheels, linux-wheels, windows-wheels, sdist]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v6
         with:
           pattern: wheels-*
           path: dist
