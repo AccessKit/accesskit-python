@@ -16,7 +16,7 @@ jobs:
       matrix:
         target: [universal2-apple-darwin]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
         with:
           python-version: ${{ env.MIN_PYTHON_VERSION }}
@@ -31,7 +31,7 @@ jobs:
           pip install accesskit --no-index --find-links dist --force-reinstall
           python -c "import accesskit"
       - name: Upload wheels
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: wheels-${{ matrix.target }}
           path: dist
@@ -43,7 +43,7 @@ jobs:
       matrix:
         target: [x86_64, x86, aarch64, armv7]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
         with:
           python-version: ${{ env.MIN_PYTHON_VERSION }}
@@ -60,7 +60,7 @@ jobs:
           pip install accesskit --no-index --find-links dist --force-reinstall
           python -c "import accesskit"
       - name: Upload wheels
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: wheels-linux-${{ matrix.target }}
           path: dist
@@ -72,7 +72,7 @@ jobs:
       matrix:
         target: [x64, x86]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
         with:
           python-version: ${{ env.MIN_PYTHON_VERSION }}
@@ -88,7 +88,7 @@ jobs:
           pip install accesskit --no-index --find-links dist --force-reinstall
           python -c "import accesskit"
       - name: Upload wheels
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: wheels-windows-${{ matrix.target }}
           path: dist
@@ -96,14 +96,14 @@ jobs:
   sdist:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Build sdist
         uses: PyO3/maturin-action@v1
         with:
           command: sdist
           args: --out dist
       - name: Upload sdist
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: wheels-sdist
           path: dist
@@ -117,7 +117,7 @@ jobs:
     needs: [macos-wheels, linux-wheels, windows-wheels, sdist]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@v7
         with:
           pattern: wheels-*
           merge-multiple: true
@@ -132,7 +132,7 @@ jobs:
     needs: [macos-wheels, linux-wheels, windows-wheels, sdist]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@v7
         with:
           pattern: wheels-*
           path: dist
