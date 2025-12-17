@@ -54,6 +54,14 @@
   * dependencies
     * accesskit_unix bumped from 0.11.0 to 0.11.1
 
+## [0.7.1](https://github.com/AccessKit/accesskit-python/compare/0.7.0...0.7.1) (2025-12-17)
+
+
+### Bug Fixes
+
+* Update some dependencies to remove duplicate versions ([#10](https://github.com/AccessKit/accesskit-python/issues/10)) ([df810ea](https://github.com/AccessKit/accesskit-python/commit/df810ea4c9cf478215f75c3970b8ea1688eaf554))
+* Update thiserror to remove duplicate version of syn ([#12](https://github.com/AccessKit/accesskit-python/issues/12)) ([c107b8d](https://github.com/AccessKit/accesskit-python/commit/c107b8d69024df40f00ca322c7ba1d6493609246))
+
 ## [0.7.0](https://github.com/AccessKit/accesskit-python/compare/0.6.0...0.7.0) (2025-09-30)
 
 
